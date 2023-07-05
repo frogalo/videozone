@@ -41,14 +41,21 @@ public class VideoService {
     @Transactional
     public void uploadVideo(MultipartFile file) {
         try {
-            ObjectId fileId = gridFsTemplate.store(file.getInputStream(), file.getOriginalFilename());
-            // Możesz wykonać dodatkowe operacje, np. zapisanie metadanych pliku w kolekcji "metadata"
+            String filename = file.getOriginalFilename();
+            // Check if a file with the same filename already exists
+            GridFSFile existingFile = gridFsTemplate.findOne(new Query().addCriteria(Criteria.where("filename").is(filename)));
+            if (existingFile != null) {
+                throw new RuntimeException("File with the same filename already exists.");
+            }
+            assert filename != null;
+            ObjectId fileId = gridFsTemplate.store(file.getInputStream(), filename);
+            // Perform additional operations, such as saving file metadata in the "metadata" collection
         } catch (IOException e) {
-            // Obsługa błędu wejścia/wyjścia
-            throw new RuntimeException("Wystąpił błąd podczas przesyłania pliku.", e);
+            // Handle input/output error
+            throw new RuntimeException("An error occurred while uploading the file.", e);
         } catch (Exception e) {
-            // Obsługa innych wyjątków
-            throw new RuntimeException("Wystąpił nieznany błąd.", e);
+            // Handle other exceptions
+            throw new RuntimeException("An unknown error occurred.", e);
         }
     }
 
