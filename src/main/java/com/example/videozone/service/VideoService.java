@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import com.mongodb.client.gridfs.model.GridFSFile;
+import org.apache.tomcat.util.http.fileupload.impl.SizeLimitExceededException;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -39,23 +40,26 @@ public class VideoService {
     }
 
     @Transactional
-    public void uploadVideo(MultipartFile file) {
+    public String uploadVideo(MultipartFile file) {
         try {
             String filename = file.getOriginalFilename();
             // Check if a file with the same filename already exists
             GridFSFile existingFile = gridFsTemplate.findOne(new Query().addCriteria(Criteria.where("filename").is(filename)));
             if (existingFile != null) {
-                throw new RuntimeException("File with the same filename already exists.");
+                return "Error: File with the same filename already exists.";
             }
             assert filename != null;
             ObjectId fileId = gridFsTemplate.store(file.getInputStream(), filename);
             // Perform additional operations, such as saving file metadata in the "metadata" collection
+            return "File uploaded successfully.";
+        } catch (SizeLimitExceededException e) {
+            return "Error: File size exceeds the allowed limit.";
         } catch (IOException e) {
             // Handle input/output error
-            throw new RuntimeException("An error occurred while uploading the file.", e);
+            return "An error occurred while uploading the file.";
         } catch (Exception e) {
             // Handle other exceptions
-            throw new RuntimeException("An unknown error occurred.", e);
+            return "An unknown error occurred.";
         }
     }
 

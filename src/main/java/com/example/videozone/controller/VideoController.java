@@ -20,13 +20,14 @@ public class VideoController {
 
     @PostMapping("/upload")
     public ResponseEntity<String> uploadVideo(@RequestParam("file") MultipartFile file) {
-        try {
-            videoService.uploadVideo(file);
-            return ResponseEntity.ok("Plik został pomyślnie przesłany.");
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        String message = videoService.uploadVideo(file);
+        if (message.startsWith("Error:")) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
+        } else {
+            return ResponseEntity.ok(message);
         }
     }
+
 
     @GetMapping("/titles")
     public ResponseEntity<List<String>> getAllVideoTitles() {
